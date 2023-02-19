@@ -1,5 +1,5 @@
 import { IQueue } from 'common/interfaces/Que'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export const useQueues = (): [IQueue[], (value: number) => void] => {
   const [queues, setQueues] = useState<IQueue[]>([
@@ -28,9 +28,8 @@ export const useQueues = (): [IQueue[], (value: number) => void] => {
             itemsAmount: queue.itemsAmount + value,
             items: [...queue.items, { id: Math.random(), value }]
           }
-        } else {
-          return queue
         }
+        return queue
       })
 
       setQueues(newQueues)
@@ -54,13 +53,38 @@ export const useQueues = (): [IQueue[], (value: number) => void] => {
           itemsAmount: queue.itemsAmount + value,
           items: [...queue.items, { id: Math.random(), value }]
         }
-      } else {
-        return queue
       }
+      return queue
     })
 
     setQueues(newQueues)
   }
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newQueues = queues.map((queue) => {
+        const changedQueItem = structuredClone(queue.items[0])
+
+        if (changedQueItem) {
+          changedQueItem.value = changedQueItem.value - 1
+
+          if (changedQueItem.value === 0) {
+            queue.items.shift()
+          } else {
+            queue.items[0] = changedQueItem
+          }
+
+          queue.itemsAmount = queue.itemsAmount - 1
+        }
+
+        return queue
+      })
+
+      setQueues(newQueues)
+    }, 500)
+
+    return () => clearInterval(interval)
+  }, [queues])
 
   return [queues, addToQueues]
 }
